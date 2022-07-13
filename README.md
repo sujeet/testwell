@@ -25,7 +25,8 @@ func TestEx1(t *testing.T) {
     assert.True(t, 42 == 42, "this got to be true")
 
     expect.Equal(t, 42, 42)
-    expect.NotEqual(t, int8(42), int64(42), "equality includes type!")
+    // The following won't even compile!
+    // expect.NotEqual(t, int8(42), int64(42), "equality includes type!")
     expect.Contains(t, "foo", "zingfoobar", "optional %s", "fmt msg",)
 }
 ```
@@ -87,8 +88,9 @@ A small code generator can be found in `internal/codegen`. It takes a Go text
 template file, and run it with a list of types. The unique template is
 `internal/assert.tmpl`.
 
-The goal of the template is easily generate functions parameterized with
-different type. Go doesn't offer generics as of Go 1.9.
+The purpose of the template was to easily generate functions parameterized with
+different types because Go 1.9 (the version of Go for which `testwell` was
+initially written) didn't offer generics.
 
 `internal/codegen/gen.sh` builds and run the code generator in a single pass.
 (We cannot use `go run` because it doesn't support multiple files package).
