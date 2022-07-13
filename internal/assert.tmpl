@@ -45,83 +45,144 @@ func False(t testing.T, tval bool, msg ...interface{}) bool {
     )
 }
 
-{{ range $T := PrimitiveTypes | GenericType | ErrorType }}
+// Equal tests if `left` is equal to `right` using the `==` operator.
+{{ $msgfmtcomment }}
+// See also DeepEqual.
+func Equal[T comparable](t testing.T,
+	left T,
+	right T,
+	msg ...interface{}) bool {
+	if h, ok := t.(testing.Helper); ok {
+		h.Helper() // Go 1.9 compatibility
+	}
+
+	if left == right {
+		return true
+	}
+
+	return failTest(
+		t,
+		fail.
+			Failure("Equal").
+			Reason("values should be equal").
+			LeftValue(left).
+			RightValue(right).
+			ExtraMsg(msg...),
+	)
+}
+
+// NotEqual tests if `left` is not equal to `right` using the `!=` operator.
+// The left value comes first, followed by the value to test against.
+{{ $msgfmtcomment }}
+// See also NotDeepEqual.
+func NotEqual[T comparable](t testing.T,
+	left T,
+	right T,
+	msg ...interface{}) bool {
+	if h, ok := t.(testing.Helper); ok {
+		h.Helper() // Go 1.9 compatibility
+	}
+
+	if left != right {
+		return true
+	}
+
+	return failTest(
+		t,
+		fail.
+			Failure("NotEqual").
+			Reason("values should not be equal").
+			LeftValue(left).
+			RightValue(right).
+			ExtraMsg(msg...),
+	)
+}
+
+// EqualError tests if `left` is equal to `right` using the `==` operator.
+{{ $msgfmtcomment }}
+func EqualError(t testing.T,
+	left error,
+	right error,
+	msg ...interface{}) bool {
+	if h, ok := t.(testing.Helper); ok {
+		h.Helper() // Go 1.9 compatibility
+	}
+
+	failure := fail.Failure("EqualError")
+
+	if ok, err := cmp.Equal(left, right); err != nil {
+		failure = failure.Error(err)
+		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
+			failure = failure.Error(cerr)
+			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
+				failure = failure.Hint("see Nil for <nil> checks")
+			} else {
+				failure = failure.Hint("take a look at DeepEqual")
+			}
+		}
+	} else if ok {
+		return true
+	}
+
+	failure = failure.Reason("values should be equal").
+		LeftValue(left).RightValue(right)
+	return failTest(t, failure.ExtraMsg(msg...))
+}
+
+// NotEqualError tests if `left` is not equal to `right` using the `!=`
+// operator. The left value comes first, followed by the value to test against.
+{{ $msgfmtcomment }}
+func NotEqualError(t testing.T,
+	left error,
+	right error,
+	msg ...interface{}) bool {
+	if h, ok := t.(testing.Helper); ok {
+		h.Helper() // Go 1.9 compatibility
+	}
+
+	failure := fail.Failure("NotEqualError")
+
+	if ok, err := cmp.Equal(left, right); err != nil {
+		failure = failure.Error(err)
+		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
+			failure = failure.Error(cerr)
+			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
+				failure = failure.Hint("see NotNil for <nil> checks")
+			} else {
+				failure = failure.Hint("take a look at NotDeepEqual")
+			}
+		}
+	} else if !ok {
+		return true
+	}
+
+	failure = failure.Reason("values should not be equal").
+		LeftValue(left).RightValue(right)
+	return failTest(t, failure.ExtraMsg(msg...))
+}
+
+{{ range $T := PrimitiveTypes }}
     // Equal{{ $T.N }} tests if `left` is equal to `right` using the `==`
     // operator.
     {{ $msgfmtcomment }}
-    // This version takes takes two {{ $T.T }}.
-    {{- if eq $T.T "interface{}" }}
-    // This is a strict equality test. It will fail if `left` and `right`
-    // have different types. For example, int32(42) is not equal to int64(42).
-    // You can use the typed versions of `Equal` for more static typing.
-    // Note that Slice, map, and function values are not comparable.
-    // See also `DeepEqual`.
-    {{- end }}
+    // Deprecated: Use Equal.
     func Equal{{ $T.N }}(t testing.T,
             left {{ $T.T }},
             right {{ $T.T }},
             msg ...interface{}) bool {
-        {{- template "helper" "t" }}
-        failure := fail.Failure("Equal{{ $T.N }}")
-
-        if ok, err := cmp.Equal(left, right); err != nil {
-            failure = failure.Error(err)
-            if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-                failure = failure.Error(cerr)
-                if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-                    failure = failure.Hint("see Nil for <nil> checks")
-                } else {
-                    failure = failure.Hint("take a look at DeepEqual")
-                }
-            }
-        } else if ok {
-            return true
-        }
-
-        failure = failure.Reason("values should be equal").
-			LeftValue(left).RightValue(right)
-        return failTest(t, failure.ExtraMsg(msg...))
+        return Equal(t, left, right, msg...)
     }
 
     // NotEqual{{ $T.N }} tests if `left` is not equal to `right` using the
     // `!=` operator. The left value comes first, followed by the value to
     // test against.
     {{ $msgfmtcomment }}
-    // This version takes takes two {{ $T.T }}
-    {{- if eq $T.T "interface{}" }}
-    // This is a strict non-equality test. It will pass only when
-    // `left` and `right` have identical type but non-equal values.
-    // For example, given int32(42) and int64(42), the test will fail because
-    // the types are not comparable. Given int32(42) and int32(42), the test
-    // will fail because the two values are equal.
-    // You can use the typed versions of `NotEqual` for more static typing.
-    // Note that Slice, map, and function values are not comparable.
-    // See also `NotDeepEqual`.
-    {{- end }}
+    // Deprecated: Use NotEqual.
     func NotEqual{{ $T.N }}(t testing.T,
             left {{ $T.T }},
             right {{ $T.T }},
             msg ...interface{}) bool {
-        {{- template "helper" "t" }}
-        failure := fail.Failure("NotEqual{{ $T.N }}")
-
-        if ok, err := cmp.Equal(left, right); err != nil {
-            failure = failure.Error(err)
-            if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-                failure = failure.Error(cerr)
-                if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-                    failure = failure.Hint("see NotNil for <nil> checks")
-                } else {
-                    failure = failure.Hint("take a look at NotDeepEqual")
-                }
-            }
-        } else if !ok {
-            return true
-        }
-
-        failure = failure.Reason("values should not be equal").
-			LeftValue(left).RightValue(right)
-        return failTest(t, failure.ExtraMsg(msg...))
+        return NotEqual(t, left, right, msg...)
     }
 {{ end }}
 

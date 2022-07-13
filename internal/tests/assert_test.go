@@ -34,68 +34,38 @@ func TestTrueFalse(t *testing.T) {
 	}
 }
 
-func TestEqual(t *testing.T) {
-	cases := []struct {
-		E interface{}
-		V interface{}
-		O bool
-	}{
-		{int(42), int(42), true},
-		{int(42), uint64(42), false},
-		{int(42), int(255), false},
-		{"foo", "foo", true},
-		{"foo", "bar", false},
-		{[]string{}, []string{}, false},
-		{nil, nil, true},
-		{nil, (*int)(nil), false},
-		{(*int)(nil), nil, false},
-		{(*int)(nil), (*int)(nil), true},
-	}
-	for _, tc := range cases {
-		t.Run(fmt.Sprintf("%v (%T) == %v (%T)",
-			tc.E, tc.E, tc.V, tc.V), func(t *testing.T) {
-
-			wt := wrap(t)
-
-			if Equal(wt, tc.E, tc.V) != tc.O {
-				t.Errorf("%v (%T) == %v (%T) should be %v",
-					tc.E, tc.E, tc.V, tc.V, tc.O)
-			}
-
-		})
-	}
+type equalityTestCase[T comparable] struct {
+	E T
+	V T
+	O bool
 }
 
-func TestNotEqual(t *testing.T) {
-	cases := []struct {
-		E interface{}
-		V interface{}
-		O bool
-	}{
-		{int(42), int(42), false},
-		{int(42), uint64(42), false},
-		{int(42), int(255), true},
-		{"foo", "foo", false},
-		{"foo", "bar", true},
-		{[]string{}, []string{}, false},
-		{nil, nil, false},
-		{nil, (*int)(nil), false},
-		{(*int)(nil), nil, false},
-		{(*int)(nil), (*int)(nil), false},
-	}
-	for _, tc := range cases {
-		t.Run(fmt.Sprintf("%v (%T) != %v (%T)",
-			tc.E, tc.E, tc.V, tc.V), func(t *testing.T) {
+func (tc equalityTestCase[T]) run(t *testing.T) {
+	t.Run(fmt.Sprintf("%v (%T) == %v (%T)",
+		tc.E, tc.E, tc.V, tc.V), func(t *testing.T) {
 
-			wt := wrap(t)
+		wt := wrap(t)
 
-			if NotEqual(wt, tc.E, tc.V) != tc.O {
-				t.Errorf("%v (%T) != %v (%T) should be %v",
-					tc.E, tc.E, tc.V, tc.V, tc.O)
-			}
+		if Equal(wt, tc.E, tc.V) != tc.O {
+			t.Errorf("%v (%T) == %v (%T) should be %v",
+				tc.E, tc.E, tc.V, tc.V, tc.O)
+		}
 
-		})
-	}
+		if NotEqual(wt, tc.E, tc.V) == tc.O {
+			t.Errorf("%v (%T) != %v (%T) should be %v",
+				tc.E, tc.E, tc.V, tc.V, !tc.O)
+		}
+
+	})
+}
+
+func TestEqual(t *testing.T) {
+	equalityTestCase[int]{42, 42, true}.run(t)
+	equalityTestCase[int]{42, 255, false}.run(t)
+	equalityTestCase[string]{"foo", "foo", true}.run(t)
+	equalityTestCase[string]{"foo", "bar", false}.run(t)
+	equalityTestCase[*interface{}]{nil, nil, true}.run(t)
+	equalityTestCase[*int]{nil, nil, true}.run(t)
 }
 
 func TestEqualTypes(t *testing.T) {

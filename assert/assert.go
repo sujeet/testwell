@@ -46,358 +46,61 @@ func False(t testing.T, tval bool, msg ...interface{}) bool {
 	)
 }
 
-// Equal tests if `left` is equal to `right` using the `==`
-// operator.
+// Equal tests if `left` is equal to `right` using the `==` operator.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two interface{}.
-// This is a strict equality test. It will fail if `left` and `right`
-// have different types. For example, int32(42) is not equal to int64(42).
-// You can use the typed versions of `Equal` for more static typing.
-// Note that Slice, map, and function values are not comparable.
-// See also `DeepEqual`.
-func Equal(t testing.T,
-	left interface{},
-	right interface{},
+// See also DeepEqual.
+func Equal[T comparable](t testing.T,
+	left T,
+	right T,
 	msg ...interface{}) bool {
 	if h, ok := t.(testing.Helper); ok {
 		h.Helper() // Go 1.9 compatibility
 	}
 
-	failure := fail.Failure("Equal")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see Nil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at DeepEqual")
-			}
-		}
-	} else if ok {
+	if left == right {
 		return true
 	}
 
-	failure = failure.Reason("values should be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return failTest(
+		t,
+		fail.
+			Failure("Equal").
+			Reason("values should be equal").
+			LeftValue(left).
+			RightValue(right).
+			ExtraMsg(msg...),
+	)
 }
 
-// NotEqual tests if `left` is not equal to `right` using the
-// `!=` operator. The left value comes first, followed by the value to
-// test against.
+// NotEqual tests if `left` is not equal to `right` using the `!=` operator.
+// The left value comes first, followed by the value to test against.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two interface{}
-// This is a strict non-equality test. It will pass only when
-// `left` and `right` have identical type but non-equal values.
-// For example, given int32(42) and int64(42), the test will fail because
-// the types are not comparable. Given int32(42) and int32(42), the test
-// will fail because the two values are equal.
-// You can use the typed versions of `NotEqual` for more static typing.
-// Note that Slice, map, and function values are not comparable.
-// See also `NotDeepEqual`.
-func NotEqual(t testing.T,
-	left interface{},
-	right interface{},
+// See also NotDeepEqual.
+func NotEqual[T comparable](t testing.T,
+	left T,
+	right T,
 	msg ...interface{}) bool {
 	if h, ok := t.(testing.Helper); ok {
 		h.Helper() // Go 1.9 compatibility
 	}
 
-	failure := fail.Failure("NotEqual")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see NotNil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at NotDeepEqual")
-			}
-		}
-	} else if !ok {
+	if left != right {
 		return true
 	}
 
-	failure = failure.Reason("values should not be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return failTest(
+		t,
+		fail.
+			Failure("NotEqual").
+			Reason("values should not be equal").
+			LeftValue(left).
+			RightValue(right).
+			ExtraMsg(msg...),
+	)
 }
 
-// EqualBool tests if `left` is equal to `right` using the `==`
-// operator.
+// EqualError tests if `left` is equal to `right` using the `==` operator.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two bool.
-func EqualBool(t testing.T,
-	left bool,
-	right bool,
-	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("EqualBool")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see Nil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at DeepEqual")
-			}
-		}
-	} else if ok {
-		return true
-	}
-
-	failure = failure.Reason("values should be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
-}
-
-// NotEqualBool tests if `left` is not equal to `right` using the
-// `!=` operator. The left value comes first, followed by the value to
-// test against.
-// msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two bool
-func NotEqualBool(t testing.T,
-	left bool,
-	right bool,
-	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("NotEqualBool")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see NotNil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at NotDeepEqual")
-			}
-		}
-	} else if !ok {
-		return true
-	}
-
-	failure = failure.Reason("values should not be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
-}
-
-// EqualByte tests if `left` is equal to `right` using the `==`
-// operator.
-// msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two byte.
-func EqualByte(t testing.T,
-	left byte,
-	right byte,
-	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("EqualByte")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see Nil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at DeepEqual")
-			}
-		}
-	} else if ok {
-		return true
-	}
-
-	failure = failure.Reason("values should be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
-}
-
-// NotEqualByte tests if `left` is not equal to `right` using the
-// `!=` operator. The left value comes first, followed by the value to
-// test against.
-// msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two byte
-func NotEqualByte(t testing.T,
-	left byte,
-	right byte,
-	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("NotEqualByte")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see NotNil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at NotDeepEqual")
-			}
-		}
-	} else if !ok {
-		return true
-	}
-
-	failure = failure.Reason("values should not be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
-}
-
-// EqualComplex128 tests if `left` is equal to `right` using the `==`
-// operator.
-// msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two complex128.
-func EqualComplex128(t testing.T,
-	left complex128,
-	right complex128,
-	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("EqualComplex128")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see Nil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at DeepEqual")
-			}
-		}
-	} else if ok {
-		return true
-	}
-
-	failure = failure.Reason("values should be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
-}
-
-// NotEqualComplex128 tests if `left` is not equal to `right` using the
-// `!=` operator. The left value comes first, followed by the value to
-// test against.
-// msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two complex128
-func NotEqualComplex128(t testing.T,
-	left complex128,
-	right complex128,
-	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("NotEqualComplex128")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see NotNil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at NotDeepEqual")
-			}
-		}
-	} else if !ok {
-		return true
-	}
-
-	failure = failure.Reason("values should not be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
-}
-
-// EqualComplex64 tests if `left` is equal to `right` using the `==`
-// operator.
-// msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two complex64.
-func EqualComplex64(t testing.T,
-	left complex64,
-	right complex64,
-	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("EqualComplex64")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see Nil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at DeepEqual")
-			}
-		}
-	} else if ok {
-		return true
-	}
-
-	failure = failure.Reason("values should be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
-}
-
-// NotEqualComplex64 tests if `left` is not equal to `right` using the
-// `!=` operator. The left value comes first, followed by the value to
-// test against.
-// msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two complex64
-func NotEqualComplex64(t testing.T,
-	left complex64,
-	right complex64,
-	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("NotEqualComplex64")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see NotNil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at NotDeepEqual")
-			}
-		}
-	} else if !ok {
-		return true
-	}
-
-	failure = failure.Reason("values should not be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
-}
-
-// EqualError tests if `left` is equal to `right` using the `==`
-// operator.
-// msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two error.
 func EqualError(t testing.T,
 	left error,
 	right error,
@@ -427,11 +130,9 @@ func EqualError(t testing.T,
 	return failTest(t, failure.ExtraMsg(msg...))
 }
 
-// NotEqualError tests if `left` is not equal to `right` using the
-// `!=` operator. The left value comes first, followed by the value to
-// test against.
+// NotEqualError tests if `left` is not equal to `right` using the `!=`
+// operator. The left value comes first, followed by the value to test against.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two error
 func NotEqualError(t testing.T,
 	left error,
 	right error,
@@ -461,1009 +162,441 @@ func NotEqualError(t testing.T,
 	return failTest(t, failure.ExtraMsg(msg...))
 }
 
+// EqualBool tests if `left` is equal to `right` using the `==`
+// operator.
+// msg is an optional list of arguments following the `fmt.Printf()` format.
+// Deprecated: Use Equal.
+func EqualBool(t testing.T,
+	left bool,
+	right bool,
+	msg ...interface{}) bool {
+	return Equal(t, left, right, msg...)
+}
+
+// NotEqualBool tests if `left` is not equal to `right` using the
+// `!=` operator. The left value comes first, followed by the value to
+// test against.
+// msg is an optional list of arguments following the `fmt.Printf()` format.
+// Deprecated: Use NotEqual.
+func NotEqualBool(t testing.T,
+	left bool,
+	right bool,
+	msg ...interface{}) bool {
+	return NotEqual(t, left, right, msg...)
+}
+
+// EqualByte tests if `left` is equal to `right` using the `==`
+// operator.
+// msg is an optional list of arguments following the `fmt.Printf()` format.
+// Deprecated: Use Equal.
+func EqualByte(t testing.T,
+	left byte,
+	right byte,
+	msg ...interface{}) bool {
+	return Equal(t, left, right, msg...)
+}
+
+// NotEqualByte tests if `left` is not equal to `right` using the
+// `!=` operator. The left value comes first, followed by the value to
+// test against.
+// msg is an optional list of arguments following the `fmt.Printf()` format.
+// Deprecated: Use NotEqual.
+func NotEqualByte(t testing.T,
+	left byte,
+	right byte,
+	msg ...interface{}) bool {
+	return NotEqual(t, left, right, msg...)
+}
+
+// EqualComplex128 tests if `left` is equal to `right` using the `==`
+// operator.
+// msg is an optional list of arguments following the `fmt.Printf()` format.
+// Deprecated: Use Equal.
+func EqualComplex128(t testing.T,
+	left complex128,
+	right complex128,
+	msg ...interface{}) bool {
+	return Equal(t, left, right, msg...)
+}
+
+// NotEqualComplex128 tests if `left` is not equal to `right` using the
+// `!=` operator. The left value comes first, followed by the value to
+// test against.
+// msg is an optional list of arguments following the `fmt.Printf()` format.
+// Deprecated: Use NotEqual.
+func NotEqualComplex128(t testing.T,
+	left complex128,
+	right complex128,
+	msg ...interface{}) bool {
+	return NotEqual(t, left, right, msg...)
+}
+
+// EqualComplex64 tests if `left` is equal to `right` using the `==`
+// operator.
+// msg is an optional list of arguments following the `fmt.Printf()` format.
+// Deprecated: Use Equal.
+func EqualComplex64(t testing.T,
+	left complex64,
+	right complex64,
+	msg ...interface{}) bool {
+	return Equal(t, left, right, msg...)
+}
+
+// NotEqualComplex64 tests if `left` is not equal to `right` using the
+// `!=` operator. The left value comes first, followed by the value to
+// test against.
+// msg is an optional list of arguments following the `fmt.Printf()` format.
+// Deprecated: Use NotEqual.
+func NotEqualComplex64(t testing.T,
+	left complex64,
+	right complex64,
+	msg ...interface{}) bool {
+	return NotEqual(t, left, right, msg...)
+}
+
 // EqualFloat32 tests if `left` is equal to `right` using the `==`
 // operator.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two float32.
+// Deprecated: Use Equal.
 func EqualFloat32(t testing.T,
 	left float32,
 	right float32,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("EqualFloat32")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see Nil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at DeepEqual")
-			}
-		}
-	} else if ok {
-		return true
-	}
-
-	failure = failure.Reason("values should be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return Equal(t, left, right, msg...)
 }
 
 // NotEqualFloat32 tests if `left` is not equal to `right` using the
 // `!=` operator. The left value comes first, followed by the value to
 // test against.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two float32
+// Deprecated: Use NotEqual.
 func NotEqualFloat32(t testing.T,
 	left float32,
 	right float32,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("NotEqualFloat32")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see NotNil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at NotDeepEqual")
-			}
-		}
-	} else if !ok {
-		return true
-	}
-
-	failure = failure.Reason("values should not be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return NotEqual(t, left, right, msg...)
 }
 
 // EqualFloat64 tests if `left` is equal to `right` using the `==`
 // operator.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two float64.
+// Deprecated: Use Equal.
 func EqualFloat64(t testing.T,
 	left float64,
 	right float64,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("EqualFloat64")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see Nil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at DeepEqual")
-			}
-		}
-	} else if ok {
-		return true
-	}
-
-	failure = failure.Reason("values should be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return Equal(t, left, right, msg...)
 }
 
 // NotEqualFloat64 tests if `left` is not equal to `right` using the
 // `!=` operator. The left value comes first, followed by the value to
 // test against.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two float64
+// Deprecated: Use NotEqual.
 func NotEqualFloat64(t testing.T,
 	left float64,
 	right float64,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("NotEqualFloat64")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see NotNil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at NotDeepEqual")
-			}
-		}
-	} else if !ok {
-		return true
-	}
-
-	failure = failure.Reason("values should not be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return NotEqual(t, left, right, msg...)
 }
 
 // EqualInt tests if `left` is equal to `right` using the `==`
 // operator.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two int.
+// Deprecated: Use Equal.
 func EqualInt(t testing.T,
 	left int,
 	right int,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("EqualInt")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see Nil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at DeepEqual")
-			}
-		}
-	} else if ok {
-		return true
-	}
-
-	failure = failure.Reason("values should be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return Equal(t, left, right, msg...)
 }
 
 // NotEqualInt tests if `left` is not equal to `right` using the
 // `!=` operator. The left value comes first, followed by the value to
 // test against.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two int
+// Deprecated: Use NotEqual.
 func NotEqualInt(t testing.T,
 	left int,
 	right int,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("NotEqualInt")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see NotNil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at NotDeepEqual")
-			}
-		}
-	} else if !ok {
-		return true
-	}
-
-	failure = failure.Reason("values should not be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return NotEqual(t, left, right, msg...)
 }
 
 // EqualInt16 tests if `left` is equal to `right` using the `==`
 // operator.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two int16.
+// Deprecated: Use Equal.
 func EqualInt16(t testing.T,
 	left int16,
 	right int16,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("EqualInt16")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see Nil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at DeepEqual")
-			}
-		}
-	} else if ok {
-		return true
-	}
-
-	failure = failure.Reason("values should be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return Equal(t, left, right, msg...)
 }
 
 // NotEqualInt16 tests if `left` is not equal to `right` using the
 // `!=` operator. The left value comes first, followed by the value to
 // test against.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two int16
+// Deprecated: Use NotEqual.
 func NotEqualInt16(t testing.T,
 	left int16,
 	right int16,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("NotEqualInt16")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see NotNil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at NotDeepEqual")
-			}
-		}
-	} else if !ok {
-		return true
-	}
-
-	failure = failure.Reason("values should not be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return NotEqual(t, left, right, msg...)
 }
 
 // EqualInt32 tests if `left` is equal to `right` using the `==`
 // operator.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two int32.
+// Deprecated: Use Equal.
 func EqualInt32(t testing.T,
 	left int32,
 	right int32,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("EqualInt32")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see Nil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at DeepEqual")
-			}
-		}
-	} else if ok {
-		return true
-	}
-
-	failure = failure.Reason("values should be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return Equal(t, left, right, msg...)
 }
 
 // NotEqualInt32 tests if `left` is not equal to `right` using the
 // `!=` operator. The left value comes first, followed by the value to
 // test against.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two int32
+// Deprecated: Use NotEqual.
 func NotEqualInt32(t testing.T,
 	left int32,
 	right int32,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("NotEqualInt32")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see NotNil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at NotDeepEqual")
-			}
-		}
-	} else if !ok {
-		return true
-	}
-
-	failure = failure.Reason("values should not be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return NotEqual(t, left, right, msg...)
 }
 
 // EqualInt64 tests if `left` is equal to `right` using the `==`
 // operator.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two int64.
+// Deprecated: Use Equal.
 func EqualInt64(t testing.T,
 	left int64,
 	right int64,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("EqualInt64")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see Nil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at DeepEqual")
-			}
-		}
-	} else if ok {
-		return true
-	}
-
-	failure = failure.Reason("values should be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return Equal(t, left, right, msg...)
 }
 
 // NotEqualInt64 tests if `left` is not equal to `right` using the
 // `!=` operator. The left value comes first, followed by the value to
 // test against.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two int64
+// Deprecated: Use NotEqual.
 func NotEqualInt64(t testing.T,
 	left int64,
 	right int64,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("NotEqualInt64")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see NotNil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at NotDeepEqual")
-			}
-		}
-	} else if !ok {
-		return true
-	}
-
-	failure = failure.Reason("values should not be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return NotEqual(t, left, right, msg...)
 }
 
 // EqualInt8 tests if `left` is equal to `right` using the `==`
 // operator.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two int8.
+// Deprecated: Use Equal.
 func EqualInt8(t testing.T,
 	left int8,
 	right int8,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("EqualInt8")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see Nil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at DeepEqual")
-			}
-		}
-	} else if ok {
-		return true
-	}
-
-	failure = failure.Reason("values should be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return Equal(t, left, right, msg...)
 }
 
 // NotEqualInt8 tests if `left` is not equal to `right` using the
 // `!=` operator. The left value comes first, followed by the value to
 // test against.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two int8
+// Deprecated: Use NotEqual.
 func NotEqualInt8(t testing.T,
 	left int8,
 	right int8,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("NotEqualInt8")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see NotNil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at NotDeepEqual")
-			}
-		}
-	} else if !ok {
-		return true
-	}
-
-	failure = failure.Reason("values should not be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return NotEqual(t, left, right, msg...)
 }
 
 // EqualRune tests if `left` is equal to `right` using the `==`
 // operator.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two rune.
+// Deprecated: Use Equal.
 func EqualRune(t testing.T,
 	left rune,
 	right rune,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("EqualRune")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see Nil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at DeepEqual")
-			}
-		}
-	} else if ok {
-		return true
-	}
-
-	failure = failure.Reason("values should be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return Equal(t, left, right, msg...)
 }
 
 // NotEqualRune tests if `left` is not equal to `right` using the
 // `!=` operator. The left value comes first, followed by the value to
 // test against.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two rune
+// Deprecated: Use NotEqual.
 func NotEqualRune(t testing.T,
 	left rune,
 	right rune,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("NotEqualRune")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see NotNil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at NotDeepEqual")
-			}
-		}
-	} else if !ok {
-		return true
-	}
-
-	failure = failure.Reason("values should not be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return NotEqual(t, left, right, msg...)
 }
 
 // EqualString tests if `left` is equal to `right` using the `==`
 // operator.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two string.
+// Deprecated: Use Equal.
 func EqualString(t testing.T,
 	left string,
 	right string,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("EqualString")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see Nil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at DeepEqual")
-			}
-		}
-	} else if ok {
-		return true
-	}
-
-	failure = failure.Reason("values should be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return Equal(t, left, right, msg...)
 }
 
 // NotEqualString tests if `left` is not equal to `right` using the
 // `!=` operator. The left value comes first, followed by the value to
 // test against.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two string
+// Deprecated: Use NotEqual.
 func NotEqualString(t testing.T,
 	left string,
 	right string,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("NotEqualString")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see NotNil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at NotDeepEqual")
-			}
-		}
-	} else if !ok {
-		return true
-	}
-
-	failure = failure.Reason("values should not be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return NotEqual(t, left, right, msg...)
 }
 
 // EqualUint tests if `left` is equal to `right` using the `==`
 // operator.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two uint.
+// Deprecated: Use Equal.
 func EqualUint(t testing.T,
 	left uint,
 	right uint,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("EqualUint")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see Nil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at DeepEqual")
-			}
-		}
-	} else if ok {
-		return true
-	}
-
-	failure = failure.Reason("values should be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return Equal(t, left, right, msg...)
 }
 
 // NotEqualUint tests if `left` is not equal to `right` using the
 // `!=` operator. The left value comes first, followed by the value to
 // test against.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two uint
+// Deprecated: Use NotEqual.
 func NotEqualUint(t testing.T,
 	left uint,
 	right uint,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("NotEqualUint")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see NotNil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at NotDeepEqual")
-			}
-		}
-	} else if !ok {
-		return true
-	}
-
-	failure = failure.Reason("values should not be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return NotEqual(t, left, right, msg...)
 }
 
 // EqualUint16 tests if `left` is equal to `right` using the `==`
 // operator.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two uint16.
+// Deprecated: Use Equal.
 func EqualUint16(t testing.T,
 	left uint16,
 	right uint16,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("EqualUint16")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see Nil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at DeepEqual")
-			}
-		}
-	} else if ok {
-		return true
-	}
-
-	failure = failure.Reason("values should be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return Equal(t, left, right, msg...)
 }
 
 // NotEqualUint16 tests if `left` is not equal to `right` using the
 // `!=` operator. The left value comes first, followed by the value to
 // test against.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two uint16
+// Deprecated: Use NotEqual.
 func NotEqualUint16(t testing.T,
 	left uint16,
 	right uint16,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("NotEqualUint16")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see NotNil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at NotDeepEqual")
-			}
-		}
-	} else if !ok {
-		return true
-	}
-
-	failure = failure.Reason("values should not be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return NotEqual(t, left, right, msg...)
 }
 
 // EqualUint32 tests if `left` is equal to `right` using the `==`
 // operator.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two uint32.
+// Deprecated: Use Equal.
 func EqualUint32(t testing.T,
 	left uint32,
 	right uint32,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("EqualUint32")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see Nil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at DeepEqual")
-			}
-		}
-	} else if ok {
-		return true
-	}
-
-	failure = failure.Reason("values should be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return Equal(t, left, right, msg...)
 }
 
 // NotEqualUint32 tests if `left` is not equal to `right` using the
 // `!=` operator. The left value comes first, followed by the value to
 // test against.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two uint32
+// Deprecated: Use NotEqual.
 func NotEqualUint32(t testing.T,
 	left uint32,
 	right uint32,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("NotEqualUint32")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see NotNil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at NotDeepEqual")
-			}
-		}
-	} else if !ok {
-		return true
-	}
-
-	failure = failure.Reason("values should not be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return NotEqual(t, left, right, msg...)
 }
 
 // EqualUint64 tests if `left` is equal to `right` using the `==`
 // operator.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two uint64.
+// Deprecated: Use Equal.
 func EqualUint64(t testing.T,
 	left uint64,
 	right uint64,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("EqualUint64")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see Nil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at DeepEqual")
-			}
-		}
-	} else if ok {
-		return true
-	}
-
-	failure = failure.Reason("values should be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return Equal(t, left, right, msg...)
 }
 
 // NotEqualUint64 tests if `left` is not equal to `right` using the
 // `!=` operator. The left value comes first, followed by the value to
 // test against.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two uint64
+// Deprecated: Use NotEqual.
 func NotEqualUint64(t testing.T,
 	left uint64,
 	right uint64,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("NotEqualUint64")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see NotNil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at NotDeepEqual")
-			}
-		}
-	} else if !ok {
-		return true
-	}
-
-	failure = failure.Reason("values should not be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return NotEqual(t, left, right, msg...)
 }
 
 // EqualUint8 tests if `left` is equal to `right` using the `==`
 // operator.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two uint8.
+// Deprecated: Use Equal.
 func EqualUint8(t testing.T,
 	left uint8,
 	right uint8,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("EqualUint8")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see Nil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at DeepEqual")
-			}
-		}
-	} else if ok {
-		return true
-	}
-
-	failure = failure.Reason("values should be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return Equal(t, left, right, msg...)
 }
 
 // NotEqualUint8 tests if `left` is not equal to `right` using the
 // `!=` operator. The left value comes first, followed by the value to
 // test against.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two uint8
+// Deprecated: Use NotEqual.
 func NotEqualUint8(t testing.T,
 	left uint8,
 	right uint8,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("NotEqualUint8")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see NotNil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at NotDeepEqual")
-			}
-		}
-	} else if !ok {
-		return true
-	}
-
-	failure = failure.Reason("values should not be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return NotEqual(t, left, right, msg...)
 }
 
 // EqualUintptr tests if `left` is equal to `right` using the `==`
 // operator.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two uintptr.
+// Deprecated: Use Equal.
 func EqualUintptr(t testing.T,
 	left uintptr,
 	right uintptr,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("EqualUintptr")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see Nil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at DeepEqual")
-			}
-		}
-	} else if ok {
-		return true
-	}
-
-	failure = failure.Reason("values should be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return Equal(t, left, right, msg...)
 }
 
 // NotEqualUintptr tests if `left` is not equal to `right` using the
 // `!=` operator. The left value comes first, followed by the value to
 // test against.
 // msg is an optional list of arguments following the `fmt.Printf()` format.
-// This version takes takes two uintptr
+// Deprecated: Use NotEqual.
 func NotEqualUintptr(t testing.T,
 	left uintptr,
 	right uintptr,
 	msg ...interface{}) bool {
-	if h, ok := t.(testing.Helper); ok {
-		h.Helper() // Go 1.9 compatibility
-	}
-
-	failure := fail.Failure("NotEqualUintptr")
-
-	if ok, err := cmp.Equal(left, right); err != nil {
-		failure = failure.Error(err)
-		if cerr, ok2 := err.(cmp.NotComparableError); ok2 {
-			failure = failure.Error(cerr)
-			if reflect.TypeOf(left) == nil || reflect.TypeOf(right) == nil {
-				failure = failure.Hint("see NotNil for <nil> checks")
-			} else {
-				failure = failure.Hint("take a look at NotDeepEqual")
-			}
-		}
-	} else if !ok {
-		return true
-	}
-
-	failure = failure.Reason("values should not be equal").
-		LeftValue(left).RightValue(right)
-	return failTest(t, failure.ExtraMsg(msg...))
+	return NotEqual(t, left, right, msg...)
 }
 
 // EqualTypes tests if `left` and `right` have the same type.
